@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel with Oriental Pearl Tower</title>
+    <style>body { margin: 0; }</style>
+  </head>
+  <body>
+<script type="importmap">
+{
+  "imports": {
+    "three": "../../build/three.module.js",
+    "three/addons/": "../../examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color( 0x222222 );
+
+const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+camera.position.set( 8, 6, 10 );
+
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild( renderer.domElement );
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.target.set( 0, 3.5, 0 );
+controls.enableDamping = true;
+
+// Lights
+
+const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
+scene.add( ambientLight );
+
+const directionalLight = new THREE.DirectionalLight( 0xffffff, 1.2 );
+directionalLight.position.set( 6, 12, 8 );
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.set( 2048, 2048 );
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 30;
+directionalLight.shadow.camera.left = -8;
+directionalLight.shadow.camera.right = 8;
+directionalLight.shadow.camera.top = 12;
+directionalLight.shadow.camera.bottom = -2;
+scene.add( directionalLight );
+
+const pointLight = new THREE.PointLight( 0xff8844, 0.4, 30 );
+pointLight.position.set( -4, 6, -3 );
+scene.add( pointLight );
+
+// Materials
+
+const silverMat = new THREE.MeshStandardMaterial( {
+	color: 0xcccccc, roughness: 0.3, metalness: 0.6
+} );
+
+const sphereMat = new THREE.MeshStandardMaterial( {
+	color: 0xff3366, roughness: 0.25, metalness: 0.3
+} );
+
+const panelMat = new THREE.MeshStandardMaterial( {
+	color: 0x888888, roughness: 0.4, metalness: 0.2
+} );
+
+// Panel
+
+const panel = new THREE.Mesh(
+	new THREE.BoxGeometry( 8, 0.15, 8 ),
+	panelMat
+);
+panel.position.y = -0.075;
+panel.receiveShadow = true;
+scene.add( panel );
+
+// Tower group
+
+const tower = new THREE.Group();
+tower.castShadow = true;
+scene.add( tower );
+
+function addMesh( geometry, material, position, parent ) {
+
+	const mesh = new THREE.Mesh( geometry, material );
+	mesh.position.copy( position );
+	mesh.castShadow = true;
+	mesh.receiveShadow = true;
+	( parent || tower ).add( mesh );
+	return mesh;
+
+}
+
+function addLeg( angle ) {
+
+	const legHeight = 3.2;
+	const leg = new THREE.Mesh(
+		new THREE.CylinderGeometry( 0.08, 0.12, legHeight, 12 ),
+		silverMat
+	);
+	leg.castShadow = true;
+
+	const spread = 1.6;
+	const xBottom = Math.sin( angle ) * spread;
+	const zBottom = Math.cos( angle ) * spread;
+	const xTop = Math.sin( angle ) * 0.15;
+	const zTop = Math.cos( angle ) * 0.15;
+
+	const bottom = new THREE.Vector3( xBottom, 0, zBottom );
+	const top = new THREE.Vector3( xTop, legHeight, zTop );
+	const mid = new THREE.Vector3().addVectors( bottom, top ).multiplyScalar( 0.5 );
+
+	const dir = new THREE.Vector3().subVectors( top, bottom ).normalize();
+	const quat = new THREE.Quaternion().setFromUnitVectors(
+		new THREE.Vector3( 0, 1, 0 ), dir
+	);
+
+	leg.position.copy( mid );
+	leg.quaternion.copy( quat );
+	leg.scale.y = bottom.distanceTo( top ) / legHeight;
+	tower.add( leg );
+
+}
+
+// 3 legs
+
+addLeg( 0 );
+addLeg( Math.PI * 2 / 3 );
+addLeg( Math.PI * 4 / 3 );
+
+// Lower large sphere
+
+addMesh(
+	new THREE.SphereGeometry( 0.9, 32, 24 ),
+	sphereMat,
+	new THREE.Vector3( 0, 2.8, 0 )
+);
+
+// Ring around lower sphere
+
+addMesh(
+	new THREE.TorusGeometry( 1.0, 0.06, 12, 48 ),
+	silverMat,
+	new THREE.Vector3( 0, 2.8, 0 )
+).rotation.x = Math.PI / 2;
+
+// Column: lower sphere -> upper sphere
+
+addMesh(
+	new THREE.CylinderGeometry( 0.15, 0.2, 2.8, 16 ),
+	silverMat,
+	new THREE.Vector3( 0, 4.6, 0 )
+);
+
+// Small middle sphere
+
+addMesh(
+	new THREE.SphereGeometry( 0.35, 24, 16 ),
+	sphereMat,
+	new THREE.Vector3( 0, 4.8, 0 )
+);
+
+// Column: middle -> upper sphere
+
+addMesh(
+	new THREE.CylinderGeometry( 0.12, 0.15, 1.6, 16 ),
+	silverMat,
+	new THREE.Vector3( 0, 5.9, 0 )
+);
+
+// Upper sphere
+
+addMesh(
+	new THREE.SphereGeometry( 0.55, 32, 20 ),
+	sphereMat,
+	new THREE.Vector3( 0, 6.8, 0 )
+);
+
+// Ring around upper sphere
+
+addMesh(
+	new THREE.TorusGeometry( 0.65, 0.04, 12, 48 ),
+	silverMat,
+	new THREE.Vector3( 0, 6.8, 0 )
+).rotation.x = Math.PI / 2;
+
+// Antenna base
+
+addMesh(
+	new THREE.CylinderGeometry( 0.08, 0.12, 1.0, 12 ),
+	silverMat,
+	new THREE.Vector3( 0, 7.6, 0 )
+);
+
+// Antenna spire
+
+addMesh(
+	new THREE.ConeGeometry( 0.06, 1.8, 12 ),
+	silverMat,
+	new THREE.Vector3( 0, 9.0, 0 )
+);
+
+// Resize
+
+window.addEventListener( 'resize', () => {
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+} );
+
+// Animation
+
+function animate() {
+
+	controls.update();
+	renderer.render( scene, camera );
+
+}
+
+renderer.setAnimationLoop( animate );
+</script>
+</body>
+</html>

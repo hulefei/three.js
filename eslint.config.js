@@ -117,6 +117,7 @@ export default [
 			'no-fallthrough': 'off',
 			'no-prototype-builtins': 'off',
 			'no-loss-of-precision': 'off',
+			'space-unary-ops': 'off',
 			'no-unused-vars': [ 'error', {
 				caughtErrors: 'none',
 			} ],

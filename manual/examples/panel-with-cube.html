@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Panel with Cube</title>
+    <style>body { margin: 0; }</style>
+  </head>
+  <body>
+<script type="importmap">
+{
+  "imports": {
+    "three": "../../build/three.module.js",
+    "three/addons/": "../../examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color( 0x222222 );
+
+const camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 100 );
+camera.position.set( 4, 4, 6 );
+
+const renderer = new THREE.WebGLRenderer( { antialias: true } );
+renderer.setSize( window.innerWidth, window.innerHeight );
+renderer.setPixelRatio( window.devicePixelRatio );
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+document.body.appendChild( renderer.domElement );
+
+const controls = new OrbitControls( camera, renderer.domElement );
+controls.target.set( 0, 0.5, 0 );
+controls.enableDamping = true;
+
+// Lights
+
+const ambientLight = new THREE.AmbientLight( 0xffffff, 0.4 );
+scene.add( ambientLight );
+
+const directionalLight = new THREE.DirectionalLight( 0xffffff, 1.2 );
+directionalLight.position.set( 5, 8, 4 );
+directionalLight.castShadow = true;
+directionalLight.shadow.mapSize.set( 1024, 1024 );
+directionalLight.shadow.camera.near = 0.5;
+directionalLight.shadow.camera.far = 20;
+directionalLight.shadow.camera.left = -5;
+directionalLight.shadow.camera.right = 5;
+directionalLight.shadow.camera.top = 5;
+directionalLight.shadow.camera.bottom = -5;
+scene.add( directionalLight );
+
+const pointLight = new THREE.PointLight( 0x4488ff, 0.6, 20 );
+pointLight.position.set( -3, 4, -2 );
+scene.add( pointLight );
+
+// Panel
+
+const panelGeometry = new THREE.BoxGeometry( 5, 0.15, 5 );
+const panelMaterial = new THREE.MeshStandardMaterial( {
+	color: 0x888888,
+	roughness: 0.4,
+	metalness: 0.2
+} );
+const panel = new THREE.Mesh( panelGeometry, panelMaterial );
+panel.position.y = -0.075;
+panel.receiveShadow = true;
+scene.add( panel );
+
+// Cube
+
+const cubeGeometry = new THREE.BoxGeometry( 1, 1, 1 );
+const cubeMaterial = new THREE.MeshStandardMaterial( {
+	color: 0x00cc66,
+	roughness: 0.3,
+	metalness: 0.1
+} );
+const cube = new THREE.Mesh( cubeGeometry, cubeMaterial );
+cube.position.y = 0.5;
+cube.castShadow = true;
+cube.receiveShadow = true;
+scene.add( cube );
+
+// Resize
+
+window.addEventListener( 'resize', () => {
+
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( window.innerWidth, window.innerHeight );
+
+} );
+
+// Animation
+
+function animate( time ) {
+
+	controls.update();
+	renderer.render( scene, camera );
+
+}
+
+renderer.setAnimationLoop( animate );
+</script>
+</html>
